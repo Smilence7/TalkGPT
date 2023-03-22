@@ -12,18 +12,22 @@ from pynput import keyboard
 class Recorder:
     stream: Stream
 
-    def __init__(self):
+    def __init__(self, chunk_size=1024, sample_rate=44100):
         self.p = pyaudio.PyAudio()
         self.frames = []
         self.running = True
-        self.filepath = '/Users/youfeng/record'
+        self.filepath = './saved/record'
+        self.chunk_size = chunk_size
+        self.sample_rate = sample_rate
+        self.num_read_channel = 1
+        self.num_write_channel = 1
 
     def record(self):
         self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=1,
-                                  rate=44100,
+                                  channels=self.num_read_channel,
+                                  rate=self.sample_rate,
                                   input=True,
-                                  frames_per_buffer=1024)
+                                  frames_per_buffer=self.chunk_size)
         while self.running:
             data = self.stream.read(1024)
             self.frames.append(data)
@@ -42,9 +46,9 @@ class Recorder:
     def save(self, filename):
         fullname = os.path.join(self.filepath, filename)
         wf = wave.open(fullname, 'wb')
-        wf.setnchannels(1)
+        wf.setnchannels(self.num_write_channel)
         wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(44100)
+        wf.setframerate(self.sample_rate)
         wf.writeframes(b''.join(self.frames))
         wf.close()
         return {
