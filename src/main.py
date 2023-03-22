@@ -3,6 +3,7 @@ import queue
 import threading
 import time
 import wave
+from converter import S2TConverter
 
 import pyaudio
 from pyaudio import Stream
@@ -12,18 +13,22 @@ from pynput import keyboard
 class Recorder:
     stream: Stream
 
-    def __init__(self):
+    def __init__(self, chunk_size=1024, sample_rate=44100):
         self.p = pyaudio.PyAudio()
         self.frames = []
         self.running = True
-        self.filepath = '/Users/youfeng/record'
+        self.filepath = './saved/record'
+        self.chunk_size = chunk_size
+        self.sample_rate = sample_rate
+        self.num_read_channel = 1
+        self.num_write_channel = 1
 
     def record(self):
         self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=1,
-                                  rate=44100,
+                                  channels=self.num_read_channel,
+                                  rate=self.sample_rate,
                                   input=True,
-                                  frames_per_buffer=1024)
+                                  frames_per_buffer=self.chunk_size)
         while self.running:
             data = self.stream.read(1024)
             self.frames.append(data)
@@ -42,15 +47,16 @@ class Recorder:
     def save(self, filename):
         fullname = os.path.join(self.filepath, filename)
         wf = wave.open(fullname, 'wb')
-        wf.setnchannels(1)
+        wf.setnchannels(self.num_write_channel)
         wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(44100)
+        wf.setframerate(self.sample_rate)
         wf.writeframes(b''.join(self.frames))
         wf.close()
         return {
             'name': os.path.basename(filename),
-            'size': len(self.frames),
-            'path': os.path.dirname(filename),
+            'dir': os.path.dirname(filename),
+            'path': filename,
+            'size': len(self.frames)
         }
 
 
@@ -58,7 +64,7 @@ class Producer(threading.Thread):
     filename: str
 
     def __init__(self, queue):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.queue = queue
         self.recorder = Recorder()
 
@@ -87,13 +93,10 @@ class Consumer(threading.Thread):
 
     def run(self):
         while self.running:
-            file = self.queue.get()
-            t = threading.Thread(target=self.do_op, args=(file,))
+            file_meta = self.queue.get()
+            t = S2TConverter(file_meta)
             t.start()
-
-    def do_op(self, file):
-        print(file['name'])
-        self.queue.task_done()
+            self.queue.task_done()
 
 
 if __name__ == '__main__':
