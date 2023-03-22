@@ -10,53 +10,69 @@ from pyaudio import Stream
 from pynput import keyboard
 
 
+class Singleton(object):
+    def __init__(self, cls):
+        self._cls = cls
+        self._instance = {}
+
+    def __call__(self):
+        if self._cls not in self._instance:
+            self._instance[self._cls] = self._cls()
+        return self._instance[self._cls]
+
+
+@Singleton
 class Recorder:
-    stream: Stream
+    running = True
+    p = pyaudio.PyAudio()
+    frames = []
+    filepath = './saved/record'
+    chunk_size = 1024
+    sample_rate = 44100
+    num_read_channel = 1
+    num_write_channel = 1
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=num_read_channel,
+                    rate=sample_rate,
+                    input=True,
+                    frames_per_buffer=chunk_size)
 
     def __init__(self, chunk_size=1024, sample_rate=44100):
-        self.p = pyaudio.PyAudio()
-        self.frames = []
-        self.running = True
-        self.filepath = './saved/record'
-        self.chunk_size = chunk_size
-        self.sample_rate = sample_rate
-        self.num_read_channel = 1
-        self.num_write_channel = 1
+        pass
 
-    def record(self):
-        self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=self.num_read_channel,
-                                  rate=self.sample_rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunk_size)
-        while self.running:
-            data = self.stream.read(1024)
-            self.frames.append(data)
-        self.stream.stop_stream()
-        self.stream.close()
+    @classmethod
+    def record(cls):
+        while cls.running:
+            data = cls.stream.read(1024)
+            cls.frames.append(data)
+        cls.stream.stop_stream()
+        cls.stream.close()
 
-    def stopGracefully(self):
-        self.running = False
+    @classmethod
+    def stopGracefully(cls):
+        cls.running = False
 
-    def stopNow(self):
-        self.running = False
-        time.sleep(3)
-        self.stream.stop_stream()
-        self.stream.close()
+    @classmethod
+    def stopNow(cls):
+        cls.running = False
+        time.sleep(1)
+        cls.stream.stop_stream()
+        cls.stream.close()
 
-    def save(self, filename):
-        fullname = os.path.join(self.filepath, filename)
+    @classmethod
+    def save(cls, filename):
+        fullname = os.path.join(cls.filepath, filename)
         wf = wave.open(fullname, 'wb')
-        wf.setnchannels(self.num_write_channel)
-        wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(self.sample_rate)
-        wf.writeframes(b''.join(self.frames))
+        wf.setnchannels(cls.num_write_channel)
+        wf.setsampwidth(cls.p.get_sample_size(pyaudio.paInt16))
+        wf.setframerate(cls.sample_rate)
+        wf.writeframes(b''.join(cls.frames))
         wf.close()
         return {
             'name': os.path.basename(filename),
             'dir': os.path.dirname(filename),
             'path': filename,
-            'size': len(self.frames)
+            'size': len(cls.frames)
         }
 
 
@@ -69,17 +85,19 @@ class Producer(threading.Thread):
         self.recorder = Recorder()
 
     def run(self):
-        with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
-            listener.join()
+        with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener1:
+            listener1.join()
 
     def on_press(self, key):
         if key == keyboard.KeyCode.from_char('t'):
+            print("on_press called!")
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
-            self.recorder.record()
+            threading.Thread(target=self.recorder.record).start()
 
     def on_release(self, key):
-        if key == keyboard.KeyCode.from_char('t'):
+        if key == keyboard.KeyCode.from_char('s'):
+            print("on_release called!")
             self.recorder.stopNow()
             file = self.recorder.save(self.filename)
             self.queue.put(file)
@@ -107,3 +125,4 @@ if __name__ == '__main__':
     consumer.start()
     producer.join()
     consumer.join()
+    # test
