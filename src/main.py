@@ -3,6 +3,7 @@ import queue
 import threading
 import time
 import wave
+from converter import S2TConverter
 
 import pyaudio
 from pyaudio import Stream
@@ -53,8 +54,9 @@ class Recorder:
         wf.close()
         return {
             'name': os.path.basename(filename),
-            'size': len(self.frames),
-            'path': os.path.dirname(filename),
+            'dir': os.path.dirname(filename),
+            'path': filename,
+            'size': len(self.frames)
         }
 
 
@@ -62,7 +64,7 @@ class Producer(threading.Thread):
     filename: str
 
     def __init__(self, queue):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.queue = queue
         self.recorder = Recorder()
 
@@ -91,13 +93,10 @@ class Consumer(threading.Thread):
 
     def run(self):
         while self.running:
-            file = self.queue.get()
-            t = threading.Thread(target=self.do_op, args=(file,))
+            file_meta = self.queue.get()
+            t = S2TConverter(file_meta)
             t.start()
-
-    def do_op(self, file):
-        print(file['name'])
-        self.queue.task_done()
+            self.queue.task_done()
 
 
 if __name__ == '__main__':
