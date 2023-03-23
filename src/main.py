@@ -80,24 +80,18 @@ class Producer(threading.Thread):
         self.pressing = False
         self.filename = None
 
-    def run(self):
-        while True:
-            with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
-                listener.join()
-
     def on_press(self, key):
         if key == keyboard.KeyCode.from_char('t') and not self.pressing:
             self.pressing = True
-            print("test: key pressed")
+            print("on_press called!")
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
-            t = threading.Thread(target=self.recorder.record)
-            t.start()
+            threading.Thread(target=self.recorder.record).start()
 
     def on_release(self, key):
-        if key == keyboard.KeyCode.from_char('t') and self.pressing:
+        if key == keyboard.KeyCode.from_char('s') and self.pressing:
             self.pressing = False
-            print("test: key released")
+            print("on_release called!")
             self.recorder.stop_now()
             file = self.recorder.save(self.filename)
             if file is not None:
