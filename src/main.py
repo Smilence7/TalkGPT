@@ -89,7 +89,7 @@ class Producer(threading.Thread):
             threading.Thread(target=self.recorder.record).start()
 
     def on_release(self, key):
-        if key == keyboard.KeyCode.from_char('s') and self.pressing:
+        if key == keyboard.KeyCode.from_char('t') and self.pressing:
             self.pressing = False
             print("on_release called!")
             self.recorder.stop_now()
@@ -98,6 +98,10 @@ class Producer(threading.Thread):
                 self.queue.put(file)
             else:
                 print("Error in saving wav file.")
+
+    def run(self):
+        with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
+            listener.join()
 
 
 class Consumer(threading.Thread):
