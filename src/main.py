@@ -16,7 +16,7 @@ class Recorder:
         self.p = pyaudio.PyAudio()
         self.frames = []
         self.running = True
-        self.filepath = '../saved/record'
+        self.filepath = os.environ['HOME'] + '/s2s_saved/record'
         self.chunk_size = chunk_size
         self.sample_rate = sample_rate
         self.num_read_channel = 1
