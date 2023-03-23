@@ -12,8 +12,11 @@ from pynput import keyboard
 
 
 class Recorder:
+    p: pyaudio.PyAudio
+
     def __init__(self, chunk_size=1024, sample_rate=44100):
         self.p = pyaudio.PyAudio()
+        self.stream = None
         self.frames = []
         self.running = True
         self.filepath = os.environ['HOME'] + '/s2s_saved/record'
@@ -21,21 +24,15 @@ class Recorder:
         self.sample_rate = sample_rate
         self.num_read_channel = 1
         self.num_write_channel = 1
-        self.stream = None
 
     def record(self):
         # todo: use logging instead
         print("Start recording...")
-        self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=self.num_read_channel,
-                                  rate=self.sample_rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunk_size)
+        self.open_stream()
         while self.running:
-            data = self.stream.read(1024)
+            data = self.stream.read(self.chunk_size)
             self.frames.append(data)
-        self.stream.stop_stream()
-        self.stream.close()
+        self.close_stream()
 
     def stop_gracefully(self):
         self.running = False
@@ -44,11 +41,23 @@ class Recorder:
         if self.stream is not None:
             self.running = False
             time.sleep(1)
-            self.stream.stop_stream()
-            self.stream.close()
+            if self.stream is not None:
+                self.close_stream()
         else:
             # todo: use logging instead
             print("Input stream is null.")
+
+    def open_stream(self):
+        self.stream = self.p.open(format=pyaudio.paInt16,
+                                  channels=self.num_read_channel,
+                                  rate=self.sample_rate,
+                                  input=True,
+                                  frames_per_buffer=self.chunk_size)
+
+    def close_stream(self):
+        self.stream.stop_stream()
+        self.stream.close()
+        self.stream = None
 
     def save(self, filename):
         if filename is not None:
@@ -61,6 +70,7 @@ class Recorder:
             wf.setframerate(self.sample_rate)
             wf.writeframes(b''.join(self.frames))
             wf.close()
+            self.frames = []
             return {
                 'name': os.path.basename(filename),
                 'dir': os.path.dirname(filename),
