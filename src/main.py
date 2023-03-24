@@ -30,15 +30,12 @@ class Recorder:
 
         self.open_stream()
         while self.running:
-            print("test: loop")
             try:
                 data = self.stream.read(self.chunk_size)
                 self.frames.append(data)
             except IOError:
                 print("IOError")
-        print("end record")
         self.close_stream()
-        print("end record2")
 
     def stop_gracefully(self):
         self.running = False
@@ -48,26 +45,20 @@ class Recorder:
         self.close_stream()
 
     def open_stream(self):
-        print("test: open waiting for lock",)
         with self.lock:
-            print("test: open in lock")
             self.running = True
             self.stream = self.p.open(format=pyaudio.paInt16,
                                       channels=self.num_read_channel,
                                       rate=self.sample_rate,
                                       input=True,
                                       frames_per_buffer=self.chunk_size)
-        print("test: open out lock")
 
     def close_stream(self):
-        print("test: close waiting for lock")
         with self.lock:
-            print("test: close in lock")
             self.running = False
             self.stream.stop_stream()
             self.stream.close()
             self.stream = None
-        print("test: close out lock")
 
     def save(self, filename):
         if not self.frames:
@@ -110,7 +101,6 @@ class Producer(threading.Thread):
 
     def on_press(self, key):
         if key == keyboard.KeyCode.from_char('t') and not self.pressing:
-            print("key pressed")
             self.pressing = True
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
@@ -122,7 +112,6 @@ class Producer(threading.Thread):
 
     def on_release(self, key):
         if key == keyboard.KeyCode.from_char('t') and self.pressing:
-            print("key released")
             self.pressing = False
             # self.recorder.stop_now()
             self.recorder.stop_gracefully()
