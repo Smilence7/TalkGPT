@@ -12,8 +12,8 @@ from pynput import keyboard
 
 
 class Recorder:
-    def __init__(self, chunk_size=1024, sample_rate=44100):
-        self.p = pyaudio.PyAudio()
+    def __init__(self, p, chunk_size=1024, sample_rate=44100):
+        self.p = p
         self.stream = None
         self.frames = []
         self.running = True
@@ -31,9 +31,14 @@ class Recorder:
         self.open_stream()
         while self.running:
             print("test: loop")
-            data = self.stream.read(self.chunk_size)
-            self.frames.append(data)
+            try:
+                data = self.stream.read(self.chunk_size)
+                self.frames.append(data)
+            except IOError:
+                print("IOError")
+        print("end record")
         self.close_stream()
+        print("end record2")
 
     def stop_gracefully(self):
         self.running = False
@@ -56,13 +61,12 @@ class Recorder:
 
     def close_stream(self):
         print("test: close waiting for lock")
-        if self.running:
-            with self.lock:
-                print("test: close in lock")
-                self.running = False
-                self.stream.stop_stream()
-                self.stream.close()
-                self.stream = None
+        with self.lock:
+            print("test: close in lock")
+            self.running = False
+            self.stream.stop_stream()
+            self.stream.close()
+            self.stream = None
         print("test: close out lock")
 
     def save(self, filename):
@@ -96,23 +100,32 @@ class Producer(threading.Thread):
     def __init__(self, queue):
         super().__init__()
         self.queue = queue
-        self.recorder = Recorder()
+        self.p = pyaudio.PyAudio()
+        self.recorder = None
         self.pressing = False
         self.filename = None
+        self.recorder_threads = []
+        self.idx = -1
 
     def on_press(self, key):
         if key == keyboard.KeyCode.from_char('t') and not self.pressing:
+            print("key pressed")
             self.pressing = True
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
-            t = threading.Thread(target=self.recorder.record)
-            t.start()
-            print(t.getName(), "started")
+            self.recorder = Recorder(self.p)
+            self.recorder_threads.append(threading.Thread(target=self.recorder.record))
+            self.idx += 1
+            self.recorder_threads[self.idx].start()
+            print(self.recorder_threads[self.idx].getName(), "started")
 
     def on_release(self, key):
         if key == keyboard.KeyCode.from_char('t') and self.pressing:
+            print("key released")
             self.pressing = False
-            self.recorder.stop_now()
+            # self.recorder.stop_now()
+            self.recorder.stop_gracefully()
+            self.recorder_threads[self.idx].join()
             file = self.recorder.save(self.filename)
             if file is not None:
                 self.queue.put(file)
