@@ -22,16 +22,17 @@ class Recorder:
         self.sample_rate = sample_rate
         self.num_read_channel = 1
         self.num_write_channel = 1
+        self.lock = threading.Lock()
 
     def record(self):
         # todo: use logging instead
         print("Start recording...")
-        self.running = True
+
         self.open_stream()
         while self.running:
+            print("test: loop")
             data = self.stream.read(self.chunk_size)
             self.frames.append(data)
-            print("test loop")
         self.close_stream()
 
     def stop_gracefully(self):
@@ -39,26 +40,30 @@ class Recorder:
 
     def stop_now(self):
         print("Stop recording...")
-        self.running = False
-        if self.stream is not None:
-            time.sleep(1)
-            if self.stream is not None:
-                self.close_stream()
-        else:
-            # todo: use logging instead
-            print("Error occurred when stopping, input stream is null.")
+        self.close_stream()
 
     def open_stream(self):
-        self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=self.num_read_channel,
-                                  rate=self.sample_rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunk_size)
+        print("test: open waiting for lock",)
+        with self.lock:
+            print("test: open in lock")
+            self.running = True
+            self.stream = self.p.open(format=pyaudio.paInt16,
+                                      channels=self.num_read_channel,
+                                      rate=self.sample_rate,
+                                      input=True,
+                                      frames_per_buffer=self.chunk_size)
+        print("test: open out lock")
 
     def close_stream(self):
-        self.stream.stop_stream()
-        self.stream.close()
-        self.stream = None
+        print("test: close waiting for lock")
+        if self.running:
+            with self.lock:
+                print("test: close in lock")
+                self.running = False
+                self.stream.stop_stream()
+                self.stream.close()
+                self.stream = None
+        print("test: close out lock")
 
     def save(self, filename):
         if not self.frames:
@@ -69,7 +74,6 @@ class Recorder:
             # todo: use logging instead
             print("Error occurred when saving, filename is null.")
             return
-        print(self.frames)
         if not os.path.exists(self.filepath):
             os.makedirs(self.filepath, 0o755)
         fullname = os.path.join(self.filepath, filename)
@@ -99,15 +103,15 @@ class Producer(threading.Thread):
     def on_press(self, key):
         if key == keyboard.KeyCode.from_char('t') and not self.pressing:
             self.pressing = True
-            print("on_press called!")
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
-            threading.Thread(target=self.recorder.record).start()
+            t = threading.Thread(target=self.recorder.record)
+            t.start()
+            print(t.getName(), "started")
 
     def on_release(self, key):
         if key == keyboard.KeyCode.from_char('t') and self.pressing:
             self.pressing = False
-            print("on_release called!")
             self.recorder.stop_now()
             file = self.recorder.save(self.filename)
             if file is not None:
