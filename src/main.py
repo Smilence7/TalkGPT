@@ -12,53 +12,62 @@ from pynput import keyboard
 
 
 class Recorder:
-    def __init__(self, chunk_size=1024, sample_rate=44100):
-        self.p = pyaudio.PyAudio()
+    def __init__(self, p, dir_path, chunk_size=1024, sample_rate=44100):
+        self.p = p
         self.stream = None
         self.frames = []
         self.running = True
-        self.filepath = os.environ['HOME'] + '/s2s_saved/record'
+        self.dir_path = dir_path
         self.chunk_size = chunk_size
         self.sample_rate = sample_rate
         self.num_read_channel = 1
         self.num_write_channel = 1
+        self.lock = threading.Lock()
 
     def record(self):
         # todo: use logging instead
         print("Start recording...")
-        self.running = True
+
         self.open_stream()
         while self.running:
-            data = self.stream.read(self.chunk_size)
-            self.frames.append(data)
-            print("test loop")
+            print("test: loop")
+            try:
+                data = self.stream.read(self.chunk_size)
+                self.frames.append(data)
+            except IOError:
+                print("IOError")
+        print("end record")
         self.close_stream()
+        print("end record2")
 
     def stop_gracefully(self):
         self.running = False
 
     def stop_now(self):
         print("Stop recording...")
-        self.running = False
-        if self.stream is not None:
-            time.sleep(1)
-            if self.stream is not None:
-                self.close_stream()
-        else:
-            # todo: use logging instead
-            print("Error occurred when stopping, input stream is null.")
+        self.close_stream()
 
     def open_stream(self):
-        self.stream = self.p.open(format=pyaudio.paInt16,
-                                  channels=self.num_read_channel,
-                                  rate=self.sample_rate,
-                                  input=True,
-                                  frames_per_buffer=self.chunk_size)
+        print("test: open waiting for lock",)
+        with self.lock:
+            print("test: open in lock")
+            self.running = True
+            self.stream = self.p.open(format=pyaudio.paInt16,
+                                      channels=self.num_read_channel,
+                                      rate=self.sample_rate,
+                                      input=True,
+                                      frames_per_buffer=self.chunk_size)
+        print("test: open out lock")
 
     def close_stream(self):
-        self.stream.stop_stream()
-        self.stream.close()
-        self.stream = None
+        print("test: close waiting for lock")
+        with self.lock:
+            print("test: close in lock")
+            self.running = False
+            self.stream.stop_stream()
+            self.stream.close()
+            self.stream = None
+        print("test: close out lock")
 
     def save(self, filename):
         if not self.frames:
@@ -69,10 +78,9 @@ class Recorder:
             # todo: use logging instead
             print("Error occurred when saving, filename is null.")
             return
-        print(self.frames)
-        if not os.path.exists(self.filepath):
-            os.makedirs(self.filepath, 0o755)
-        fullname = os.path.join(self.filepath, filename)
+        if not os.path.exists(self.dir_path):
+            os.makedirs(self.dir_path, 0o755)
+        fullname = os.path.join(self.dir_path, filename)
         wf = wave.open(fullname, 'wb')
         wf.setnchannels(self.num_write_channel)
         wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
@@ -81,34 +89,44 @@ class Recorder:
         wf.close()
         self.frames = []
         return {
-            'name': os.path.basename(filename),
-            'dir': os.path.dirname(filename),
-            'path': filename,
+            'name': filename,
+            'dir': self.dir_path,
+            'path': fullname,
             'size': len(self.frames)
         }
 
 
 class Producer(threading.Thread):
-    def __init__(self, queue):
+    def __init__(self, dir_path, queue):
         super().__init__()
+        self.dir_path = dir_path
         self.queue = queue
-        self.recorder = Recorder()
+        self.p = pyaudio.PyAudio()
+        self.recorder = None
         self.pressing = False
         self.filename = None
+        self.recorder_threads = []
+        self.idx = -1
 
     def on_press(self, key):
         if key == keyboard.KeyCode.from_char('t') and not self.pressing:
+            print("key pressed")
             self.pressing = True
-            print("on_press called!")
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
-            threading.Thread(target=self.recorder.record).start()
+            self.recorder = Recorder(self.p, self.dir_path)
+            self.recorder_threads.append(threading.Thread(target=self.recorder.record))
+            self.idx += 1
+            self.recorder_threads[self.idx].start()
+            print(self.recorder_threads[self.idx].getName(), "started")
 
     def on_release(self, key):
         if key == keyboard.KeyCode.from_char('t') and self.pressing:
+            print("key released")
             self.pressing = False
-            print("on_release called!")
-            self.recorder.stop_now()
+            # self.recorder.stop_now()
+            self.recorder.stop_gracefully()
+            self.recorder_threads[self.idx].join()
             file = self.recorder.save(self.filename)
             if file is not None:
                 self.queue.put(file)
@@ -135,8 +153,9 @@ class Consumer(threading.Thread):
 
 
 if __name__ == '__main__':
+    save_dir = os.environ['HOME'] + '/s2s_saved/record'
     q = queue.Queue()
-    producer = Producer(q)
+    producer = Producer(save_dir, q)
     consumer = Consumer(q)
     producer.start()
     consumer.start()
