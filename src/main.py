@@ -12,12 +12,12 @@ from pynput import keyboard
 
 
 class Recorder:
-    def __init__(self, p, chunk_size=1024, sample_rate=44100):
+    def __init__(self, p, dir_path, chunk_size=1024, sample_rate=44100):
         self.p = p
         self.stream = None
         self.frames = []
         self.running = True
-        self.filepath = os.environ['HOME'] + '/s2s_saved/record'
+        self.dir_path = dir_path
         self.chunk_size = chunk_size
         self.sample_rate = sample_rate
         self.num_read_channel = 1
@@ -78,9 +78,9 @@ class Recorder:
             # todo: use logging instead
             print("Error occurred when saving, filename is null.")
             return
-        if not os.path.exists(self.filepath):
-            os.makedirs(self.filepath, 0o755)
-        fullname = os.path.join(self.filepath, filename)
+        if not os.path.exists(self.dir_path):
+            os.makedirs(self.dir_path, 0o755)
+        fullname = os.path.join(self.dir_path, filename)
         wf = wave.open(fullname, 'wb')
         wf.setnchannels(self.num_write_channel)
         wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
@@ -89,16 +89,17 @@ class Recorder:
         wf.close()
         self.frames = []
         return {
-            'name': os.path.basename(filename),
-            'dir': os.path.dirname(filename),
-            'path': filename,
+            'name': filename,
+            'dir': self.dir_path,
+            'path': fullname,
             'size': len(self.frames)
         }
 
 
 class Producer(threading.Thread):
-    def __init__(self, queue):
+    def __init__(self, dir_path, queue):
         super().__init__()
+        self.dir_path = dir_path
         self.queue = queue
         self.p = pyaudio.PyAudio()
         self.recorder = None
@@ -113,7 +114,7 @@ class Producer(threading.Thread):
             self.pressing = True
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
-            self.recorder = Recorder(self.p)
+            self.recorder = Recorder(self.p, self.dir_path)
             self.recorder_threads.append(threading.Thread(target=self.recorder.record))
             self.idx += 1
             self.recorder_threads[self.idx].start()
@@ -152,8 +153,9 @@ class Consumer(threading.Thread):
 
 
 if __name__ == '__main__':
+    save_dir = os.environ['HOME'] + '/s2s_saved/record'
     q = queue.Queue()
-    producer = Producer(q)
+    producer = Producer(save_dir, q)
     consumer = Consumer(q)
     producer.start()
     consumer.start()
