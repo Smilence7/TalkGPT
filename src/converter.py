@@ -1,9 +1,11 @@
 import os.path
 import threading
 import openai
+import logging
 from pydub import AudioSegment
 
-openai.api_key = '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'
+openai.api_key = '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'
+
 
 def get_file_size_MB(path):
     size = os.path.getsize(path)
@@ -12,8 +14,10 @@ def get_file_size_MB(path):
 
 
 class S2TConverter(threading.Thread):
+
     def __init__(self, file_meta):
         super().__init__()
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.file_meta = file_meta
         self.response = None
 
@@ -26,9 +30,9 @@ class S2TConverter(threading.Thread):
         else:
             with open(self.file_meta['path'], "rb") as file:
                 self.response = openai.Audio.transcribe("whisper-1", file)
-        print(self.response['text'])
+        self.logger.info(self.response['text'])
         # todo: save to file temporarily
 
     def run(self):
-        print(self.file_meta['path'])
+        self.logger.info(self.file_meta['path'])
         self.convert()
