@@ -1,7 +1,7 @@
 import logging.config
 from os import path
 import queue
-from components import Producer, Consumer
+from component import Producer, Consumer
 
 
 if __name__ == '__main__':
