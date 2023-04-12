@@ -3,9 +3,10 @@ import os.path
 import threading
 import time
 import wave
-from converter import S2TConverter
+from service import S2TConverter, ChatService, T2SConverter
 import pyaudio
 from pynput import keyboard
+import os.path
 
 
 class Recorder:
@@ -136,6 +137,26 @@ class Consumer(threading.Thread):
     def run(self):
         while self.running:
             file_meta = self.queue.get()
-            t = S2TConverter(file_meta)
+            t = Worker(file_meta)
             t.start()
             self.queue.task_done()
+
+
+class Worker(threading.Thread):
+    def __init__(self, file_meta):
+        super().__init__()
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.s2t = S2TConverter(file_meta)
+        self.chat = ChatService()
+        self.t2s = T2SConverter()
+
+    def run(self):
+        text = self.s2t.convert()
+        resp = self.chat.query(text)
+        self.logger.info(resp)
+        self.t2s.convert()
+
+
+class InputGenerator:
+    def __init__(self):
+        pass

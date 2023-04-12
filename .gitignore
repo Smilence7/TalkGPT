@@ -4,3 +4,5 @@ Pipfile*
 venv/
 src/__pycache__/
 saved/
+**/*.yaml
+**/*.yml
