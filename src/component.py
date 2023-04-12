@@ -6,6 +6,7 @@ import wave
 from service import S2TConverter, ChatService
 import pyaudio
 from pynput import keyboard
+import os.path
 
 
 class Recorder:
@@ -145,13 +146,14 @@ class Worker(threading.Thread):
     def __init__(self, file_meta):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.cvtr = S2TConverter(file_meta)
+        self.s2t = S2TConverter(file_meta)
         self.chat = ChatService()
 
     def run(self):
         text = self.cvtr.convert()
         resp = self.chat.query(text)
         self.logger.info(resp)
+
 
 
 class InputGenerator:

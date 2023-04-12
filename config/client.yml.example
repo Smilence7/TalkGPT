@@ -1,0 +1,5 @@
+api_key:
+  openai: your_api_key
+  google: your_api_key
+
+save_dir: ../saved/record

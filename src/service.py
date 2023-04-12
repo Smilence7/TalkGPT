@@ -4,8 +4,6 @@ import openai
 import logging
 from pydub import AudioSegment
 
-openai.api_key = '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'
-
 
 def get_file_size_MB(path):
     size = os.path.getsize(path)
