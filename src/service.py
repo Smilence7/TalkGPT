@@ -2,7 +2,9 @@ import os.path
 import copy
 import openai
 import logging
+from google.cloud import texttospeech
 from pydub import AudioSegment
+from pydub.playback import play
 
 
 def get_file_size_MB(path):
@@ -73,3 +75,22 @@ class ChatService:
             max_tokens=self.max_tokens,
         )
         return _trimmed_fetch_response(self.logger, resp, self.n)
+
+
+class T2SConverter:
+    def __init__(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.client = texttospeech.TextToSpeechClient()
+        self.voice = texttospeech.VoiceSelectionParams(language_code="en-US",
+                                                       ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL)
+        self.audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
+
+    def convert(self, user_in):
+        synthesis_input = texttospeech.SynthesisInput(text=user_in)
+        response = self.client.synthesize_speech(input=synthesis_input, voice=self.voice,
+                                                 audio_config=self.audio_config)
+        with open("speech.mp3", "wb") as out:
+            out.write(response.audio_content)
+            self.logger.info('Audio content written to file "speech.mp3"')
+        speech = AudioSegment.from_file("speech.mp3", format="mp3")
+        play(speech)
