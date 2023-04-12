@@ -9,17 +9,16 @@ from component import Producer, Consumer
 
 class S2SApp:
     def __init__(self):
-        cur_dir = path.dirname(path.abspath(__file__))
-        log_conf = path.join(path.dirname(cur_dir), 'config/logging.conf')
+        parent_dir = path.dirname(path.dirname(path.abspath(__file__)))
+        log_conf = path.join(parent_dir, 'config/logging.conf')
         logging.config.fileConfig(log_conf)
-        # save_dir = path.join(path.dirname(cur_dir), 'saved/record/')
-        conf = path.join(path.dirname(cur_dir), 'config/client.yml')
+        conf = path.join(parent_dir, 'config/client.yml')
         with open(conf, 'r') as f:
             self.config = yaml.safe_load(f)
         q = queue.Queue()
         openai.api_key = self.config['api_key']['openai']
-        self.producer = Producer(self.config['save_dir'], q)
-        self.consumer = Consumer(q)
+        self.producer = Producer(self.config, q)
+        self.consumer = Consumer(self.config, q)
 
     def activate(self):
         self.producer.start()

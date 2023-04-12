@@ -1,5 +1,15 @@
 api_key:
   openai: your_api_key
-  google: your_api_key
+  aws:
+    key_id: your_access_key_id
+    key: your_secret_access_key
 
 save_dir: ../saved/record
+
+polly:
+  voice_id: Joanna/...
+  output_format: mp3
+  region_name: us-east-1/...
+
+gpt:
+  mode: free/polish/...

@@ -6,3 +6,4 @@ src/__pycache__/
 saved/
 **/*.yaml
 **/*.yml
+**/*.mp3
