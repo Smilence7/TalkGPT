@@ -165,5 +165,3 @@ class Worker(threading.Thread):
         except ValueError as e:
             self.logger.error("Error in speech-to-text: {0}".format(e))
             sys.exit(-1)
-
-

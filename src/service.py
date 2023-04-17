@@ -179,4 +179,3 @@ class Generator:
         else:
             self.logger.debug("Using free talking mode.")
             return raw
-
