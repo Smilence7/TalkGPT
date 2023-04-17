@@ -1,2 +1,2 @@
-# Welcome to Spe2Spe
-Spe2Spe is a speech-to-speech AI assistant that is based on a set of open API services and offers a range of customized features.
+# Welcome to TalkGPT
+TalkGPT is a speech-to-speech AI assistant that is based on a set of open API services and offers a range of customized features.
