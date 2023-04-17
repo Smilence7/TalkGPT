@@ -89,7 +89,7 @@ class ChatService:
             n=self.n,
             max_tokens=self.max_tokens,
         )
-        self.logger.debug("Response: {0}".format(resp))
+        self.logger.debug("Response: {0}".format(resp.choices[0].message.content.strip()))
         return _trimmed_fetch_response(self.logger, resp, self.n)
 
 
@@ -103,6 +103,7 @@ class T2SConverter:
             region_name=config['polly']['region_name']).client('polly')
         self.voice_id = config['polly']['voice_id']
         self.output_format = config['polly']['output_format']
+        self.engine = config['polly']['engine']
         self.save_path = save_path
 
     def convert(self, text):
@@ -114,7 +115,8 @@ class T2SConverter:
             speech = self.client.synthesize_speech(
                 Text=text,
                 VoiceId=self.voice_id,
-                OutputFormat=self.output_format)
+                OutputFormat=self.output_format,
+                Engine=self.engine)
         except (BotoCoreError, ClientError) as e:
             self.logger.error(e)
             sys.exit(-1)

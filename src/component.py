@@ -114,7 +114,6 @@ class Producer(threading.Thread):
     def on_release(self, key):
         if key == keyboard.KeyCode.from_char('t') and self.pressing:
             self.pressing = False
-            # self.recorder.stop_now()
             self.recorder.stop_gracefully()
             self.recorder_threads[self.idx].join()
             file = self.recorder.save(self.filename)
