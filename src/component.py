@@ -3,10 +3,11 @@ import os.path
 import threading
 import time
 import wave
-from service import S2TConverter, ChatService, T2SConverter
+from src.service import S2TConverter, ChatService, T2SConverter, Generator, play
 import pyaudio
+import traceback
 from pynput import keyboard
-import os.path
+import sys
 
 
 class Recorder:
@@ -87,10 +88,10 @@ class Recorder:
 
 class Producer(threading.Thread):
 
-    def __init__(self, dir_path, queue):
+    def __init__(self, config, queue):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.dir_path = dir_path
+        self.dir_path = config['save_dir']
         self.queue = queue
         self.p = pyaudio.PyAudio()
         self.recorder = None
@@ -128,35 +129,39 @@ class Producer(threading.Thread):
 
 
 class Consumer(threading.Thread):
-    def __init__(self, queue):
+    def __init__(self, config, queue):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.config = config
         self.queue = queue
         self.running = True
 
     def run(self):
         while self.running:
             file_meta = self.queue.get()
-            t = Worker(file_meta)
+            t = Worker(self.config, file_meta)
             t.start()
             self.queue.task_done()
 
 
 class Worker(threading.Thread):
-    def __init__(self, file_meta):
+    def __init__(self, config, file_meta):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.s2t = S2TConverter(file_meta)
+        self.file_meta = file_meta
+        self.save_path = os.path.join(config['save_dir'], file_meta['name'].split('.')[0] + '-reply' + '.wav')
+        self.s2t = S2TConverter()
         self.chat = ChatService()
-        self.t2s = T2SConverter()
+        self.generator = Generator(config['gpt']['mode'])
+        self.t2s = T2SConverter(config, self.save_path)
 
     def run(self):
-        text = self.s2t.convert()
-        resp = self.chat.query(text)
-        self.logger.info(resp)
-        self.t2s.convert()
-
-
-class InputGenerator:
-    def __init__(self):
-        pass
+        try:
+            text = self.s2t.convert(self.file_meta['path'])
+            text = self.generator.generate(text)
+            text = self.chat.query(text)
+            self.t2s.convert_and_save(text)
+            play(self.save_path)
+        except ValueError as e:
+            self.logger.error("Error in speech-to-text: {0}".format(e))
+            sys.exit(-1)
