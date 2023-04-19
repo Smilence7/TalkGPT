@@ -2,6 +2,7 @@
 Pipfile*
 *.log
 .venv/
+venv/
 src/__pycache__/
 saved/
 **/*.yaml
