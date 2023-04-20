@@ -9,6 +9,7 @@ from contextlib import closing
 import pydub.playback
 from pydub import AudioSegment
 from playsound import playsound
+import time
 
 
 def get_file_size_MB(path):
@@ -56,15 +57,15 @@ class S2TConverter:
         self.logger.info("Converting speech to text: {0}".format(audio_path))
         should_split = get_file_size_MB(audio_path) > 25
         if should_split:
-            file = AudioSegment.from_wav(audio_path)
-            response = openai.Audio.transcribe("whisper-1", file)
+            speech = AudioSegment.from_wav(audio_path)
+            t_start = time.time()
+            text = openai.Audio.transcribe("whisper-1", speech)
         else:
+            t_start = time.time()
             with open(audio_path, "rb") as file:
-                response = openai.Audio.transcribe("whisper-1", file)
-        self.logger.debug(response)
-        self.logger.info("Speech to text result: {0}".format(response['text']))
-        return response['text']
-        # todo: save to file temporarily
+                text = openai.Audio.transcribe("whisper-1", file)
+        self.logger.debug("s2t convert :: {0}s used.".format(round(time.time() - t_start, 2)))
+        return text['text']
 
 
 class ChatService:
@@ -76,11 +77,12 @@ class ChatService:
         self.n = n
         self.max_tokens = max_tokens
 
-    def query(self, req):
+    def chat(self, req):
         if req is None or req == '':
             msg = "request is none or empty."
             self.logger.error(msg)
             raise ValueError(msg)
+        t_start = time.time()
         resp = openai.ChatCompletion.create(
             model=self.model,
             messages=req,
@@ -89,7 +91,7 @@ class ChatService:
             n=self.n,
             max_tokens=self.max_tokens,
         )
-        self.logger.debug("Response: {0}".format(resp.choices[0].message.content.strip()))
+        self.logger.debug("chat :: {0}s used.".format(round(time.time() - t_start, 2)))
         return _trimmed_fetch_response(self.logger, resp, self.n)
 
 
@@ -112,11 +114,13 @@ class T2SConverter:
             self.logger.error(msg)
             raise ValueError(msg)
         try:
+            t_start = time.time()
             speech = self.client.synthesize_speech(
                 Text=text,
                 VoiceId=self.voice_id,
                 OutputFormat=self.output_format,
                 Engine=self.engine)
+            self.logger.debug("t2s convert :: {0}s used.".format(round(time.time() - t_start, 2)))
         except (BotoCoreError, ClientError) as e:
             self.logger.error(e)
             sys.exit(-1)
@@ -189,7 +193,6 @@ class Generator:
             raise ValueError(msg)
         if self.key in self.prompts:
             query = {"role": "user", "content": "{0}".format(raw)}
-            self.logger.info('query :: {0}'.format(query))
             messages = copy.deepcopy(self.prompts[self.key])
             messages.append(query)
             return messages

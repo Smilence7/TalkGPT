@@ -150,15 +150,17 @@ class Worker(threading.Thread):
         self.file_meta = file_meta
         self.save_path = os.path.join(config['save_dir'], file_meta['name'].split('.')[0] + '-reply' + '.wav')
         self.s2t = S2TConverter()
-        self.chat = ChatService(model=config['gpt']['model'])
+        self.chatbot = ChatService(model=config['gpt']['model'])
         self.generator = Generator(config['gpt']['mode'])
         self.t2s = T2SConverter(config, self.save_path)
 
     def run(self):
         try:
             text = self.s2t.convert(self.file_meta['path'])
+            self.logger.info("User: {0}".format(text))
             text = self.generator.generate(text)
-            text = self.chat.query(text)
+            text = self.chatbot.chat(text)
+            self.logger.info("TalkGPT: {0}".format(text))
             self.t2s.convert_and_save(text)
             play(self.save_path)
         except ValueError as e:
