@@ -150,7 +150,7 @@ class Worker(threading.Thread):
         self.file_meta = file_meta
         self.save_path = os.path.join(config['save_dir'], file_meta['name'].split('.')[0] + '-reply' + '.wav')
         self.s2t = S2TConverter()
-        self.chat = ChatService()
+        self.chat = ChatService(model=config['gpt']['model'])
         self.generator = Generator(config['gpt']['mode'])
         self.t2s = T2SConverter(config, self.save_path)
 
