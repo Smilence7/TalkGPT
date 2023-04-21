@@ -28,7 +28,10 @@ cd ./TalkGPT
 
 #### 3. Install required libraries  
 - python3 environment is required, testing is done on version 3.8.
-- install required third-party libraries. `pip3 install -r requirements.txt`
+- install required third-party libraries. 
+```shell
+pip3 install -r requirements.txt
+```
 
 #### 4. Complete your configuration
 ```shell
@@ -38,7 +41,9 @@ vim ./config/config.yml
 Set your Access Keys in config file, and adjust properties for your demand.
 
 #### 5. Run  
-`python3 ./src/main.py`
+```shell
+python3 ./src/main.py
+```
 
 #### 6. Push to talk
 - Press and hold `T` on your keyboard to talk.  
