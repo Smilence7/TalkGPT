@@ -19,17 +19,25 @@ Basic structure of TalkGPT
 - You need an AWS account to create an IAM account, and create a set of credentials for your IAM account on the credential management page, which will be used for text-to-speech API access.
 
 2. Download the project
-```python
+```shell
 git clone git@github.com:Smilence7/TalkGPT.git
 cd ./TalkGPT
 ```
 
 3. Install required libraries  
-`pip install -r requirements.txt`
+- python3 environment is required, testing is done on version 3.8.
+- install required third-party libraries. `pip3 install -r requirements.txt`
 
-4. Run  
-`python ./src/main.py`
+4. Complete your configuration
+```shell
+mv ./config/config.yml.example ./config/config.yml
+vim ./config/config.yml
+```
+Set your Access Keys in config file, and adjust properties for your demand.
 
-5. Push to talk
-Press and hold `T` on your keyboard to talk.  
-You will hear the response from your output device around 1~5 seconds after releasing the key, depending on your network condition.
+5. Run  
+`python3 ./src/main.py`
+
+6. Push to talk
+- Press and hold `T` on your keyboard to talk.  
+- You will hear the response from your output device around 1~5 seconds after releasing the key, depending on your network condition.
