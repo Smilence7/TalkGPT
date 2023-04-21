@@ -35,7 +35,7 @@ pip3 install -r requirements.txt
 
 #### 4. Configure your settings
 ```shell
-mv ./config/config.yml.example ./config/config.yml
+cp ./config/config.yml.example ./config/config.yml
 vim ./config/config.yml
 ```
 Set your Access Keys in the config file and adjust the properties to suit your needs.
