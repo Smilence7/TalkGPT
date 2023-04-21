@@ -22,7 +22,7 @@ Basic structure of TalkGPT
 
 #### 2. Download the project
 ```shell
-git clone git@github.com:Smilence7/TalkGPT.git
+git clone https://github.com/Smilence7/TalkGPT.git
 cd ./TalkGPT
 ```
 
