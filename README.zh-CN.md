@@ -19,7 +19,7 @@ TalkGPT的基本结构
 
 #### 2. 下载此项目  
 ```shell
-git clone git@github.com:Smilence7/TalkGPT.git
+git clone https://github.com/Smilence7/TalkGPT.git
 cd ./TalkGPT
 ```
 
