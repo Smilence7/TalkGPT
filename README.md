@@ -2,11 +2,11 @@
 
 [中文README](https://github.com/Smilence7/TalkGPT/blob/main/README.zh-CN.md)
 
-### What is it
+## What is it
 
 TalkGPT is a speech-to-speech AI assistant based on a set of open API services and offers a range of customized features.
 
-### System Structure
+## System Structure
 
 Basic structure of TalkGPT
 
@@ -14,7 +14,7 @@ Basic structure of TalkGPT
 ![talkgpt_1x](https://user-images.githubusercontent.com/12277570/233575831-0a669fda-a4e9-40b7-a4e8-98ecc437bfa0.png)
 
 
-### Quick Start
+## Quick Start
 
 #### 1. Apply for API access keys
 - To use the speech-to-text and chat completion APIs, you'll need an OpenAI account to create an API key in your user page.
@@ -52,7 +52,7 @@ python3 ./src/main.py
 #### 7. Stop the program
 Just kill it.
 
-### Features
+## Features
 You can have a conversation with the application, just like you would on the ChatGPT website, but in the form of voice input and output.
 #### 1. Free mode
 No input/output restriction.
