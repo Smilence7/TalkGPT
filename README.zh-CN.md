@@ -1,5 +1,7 @@
 # 欢迎
 
+[English README](https://github.com/Smilence7/TalkGPT/blob/main/README.md)
+
 ### 介绍
 TalkGPT是一个基于一系列开放API服务的语音对话AI助手，计划提供一系列定制化功能。
 
