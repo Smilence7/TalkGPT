@@ -7,11 +7,11 @@ api_key:
 save_dir: ../saved/record
 
 polly:
-  voice_id: Joanna/Emma/...
+  voice_id: Emma
   output_format: mp3
-  region_name: us-east-1/...
-  engine: neural/standard
+  region_name: us-east-1
+  engine: neural
 
 gpt:
-  model: gpt-3.5-turbo/gpt-4/...
-  mode: polish/free
+  model: gpt-3.5-turbo
+  mode: free
