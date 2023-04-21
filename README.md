@@ -20,14 +20,16 @@ Basic structure of TalkGPT
 
 2. Download the project
 ```python
-git clone url_for_this_repo
+git clone git@github.com:Smilence7/TalkGPT.git
 cd ./TalkGPT
 ```
 
-3. Install required libraries
+3. Install required libraries  
 `pip install -r requirements.txt`
 
-4. Run
+4. Run  
 `python ./src/main.py`
 
-5. press and hold `T` on your keyboard to speak
+5. Push to talk
+Press and hold `T` on your keyboard to talk.  
+You will hear the response from your output device around 1~5 seconds after releasing the key, depending on your network condition.
