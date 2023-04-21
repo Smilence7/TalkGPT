@@ -1,5 +1,7 @@
 # Welcome
 
+[中文README](https://github.com/Smilence7/TalkGPT/blob/main/README.zh-CN.md)
+
 ### What is it
 
 TalkGPT is a speech-to-speech AI assistant based on a set of open API services and offers a range of customized features.
