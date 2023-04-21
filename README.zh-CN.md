@@ -25,7 +25,10 @@ cd ./TalkGPT
 
 #### 3. 安装所需库  
 - 项目依赖python环境，建议使用python-3.8版本
-- 安装第三方库 `pip3 install -r requirements.txt`
+- 安装第三方库 
+```shell
+pip3 install -r requirements.txt
+```
 
 #### 4. 填写配置文件  
 ```shell
@@ -35,7 +38,9 @@ vim ./config/config.yml
 将你申请的秘钥填写在对应位置，根据需要修改其他配置
 
 #### 5. 运行  
-`python ./src/main.py`
+```shell
+python ./src/main.py
+```
 
 #### 6. 按住热键说话  
 - 按住键盘上的“T”键说话。  
