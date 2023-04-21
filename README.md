@@ -16,9 +16,9 @@ Basic structure of TalkGPT
 
 ### Quick Start
 
-#### 1. Apply for API access key
-- You need an OpenAI account to create an api_key in your user page, which will be used for speech-to-text API access & chat completion API access.
-- You need an AWS account to create an IAM account, and create a set of credentials for your IAM account on the credential management page, which will be used for text-to-speech API access.
+#### 1. Apply for API access keys
+- To use the speech-to-text and chat completion APIs, you'll need an OpenAI account to create an API key in your user page.
+- To use the text-to-speech API, you'll need an AWS account to create an IAM account and a set of credentials on the credential management page.
 
 #### 2. Download the project
 ```shell
@@ -27,24 +27,35 @@ cd ./TalkGPT
 ```
 
 #### 3. Install required libraries  
-- python3 environment is required, testing is done on version 3.8.
-- install required third-party libraries. 
+- Python 3 is required, and the testing was done on version 3.8.
+- Install the required third-party libraries.
 ```shell
 pip3 install -r requirements.txt
 ```
 
-#### 4. Complete your configuration
+#### 4. Configure your settings
 ```shell
 mv ./config/config.yml.example ./config/config.yml
 vim ./config/config.yml
 ```
-Set your Access Keys in config file, and adjust properties for your demand.
+Set your Access Keys in the config file and adjust the properties to suit your needs.
 
-#### 5. Run  
+#### 5. Run the program
 ```shell
 python3 ./src/main.py
 ```
 
-#### 6. Push to talk
+#### 6. Speak to it
 - Press and hold `T` on your keyboard to talk.  
-- You will hear the response from your output device around 1~5 seconds after releasing the key, depending on your network condition.
+- You will hear the response from your output device in around 1-5 seconds, depending on your network condition.
+
+#### 7. Stop the program
+Just kill it.
+
+### Features
+You can have a conversation with the application, just like you would on the ChatGPT website, but in the form of voice input and output.
+#### 1. Free mode
+No input/output restriction.
+#### 2. Polish mode
+Speak several sentences and the program will respond with a better or more native version. Primarily intended for language improvement purposes.
+
