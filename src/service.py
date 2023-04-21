@@ -10,6 +10,7 @@ import pydub.playback
 from pydub import AudioSegment
 from playsound import playsound
 import time
+import threading
 
 
 def get_file_size_MB(path):
@@ -45,6 +46,14 @@ def _trimmed_fetch_response(logger, resp, n):
 
 
 class S2TConverter:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -69,6 +78,15 @@ class S2TConverter:
 
 
 class ChatService:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self, model="gpt-3.5-turbo", temperature=1, top_p=1, n=1, max_tokens=100):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.model = model
@@ -96,7 +114,16 @@ class ChatService:
 
 
 class T2SConverter:
-    def __init__(self, config, save_path):
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, config):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.save_dir = config['save_dir']
         self.client = boto3.Session(
@@ -106,7 +133,6 @@ class T2SConverter:
         self.voice_id = config['polly']['voice_id']
         self.output_format = config['polly']['output_format']
         self.engine = config['polly']['engine']
-        self.save_path = save_path
 
     def convert(self, text):
         if text is None or text == '':
@@ -126,17 +152,17 @@ class T2SConverter:
             sys.exit(-1)
         return speech
 
-    def save(self, speech):
+    def save(self, speech, save_path):
         if speech is None:
             msg = "speech is none"
             self.logger.error(msg)
             raise ValueError(msg)
         if "AudioStream" in speech:
             with closing(speech["AudioStream"]) as stream:
-                self.logger.info('Audio content saving to file "{0}"'.format(self.save_path))
+                self.logger.info('Audio content saving to file "{0}"'.format(save_path))
                 try:
                     data = stream.read()
-                    with open(self.save_path, "wb") as file:
+                    with open(save_path, "wb") as file:
                         file.write(data)
                 except IOError as e:
                     self.logger.error(e)
@@ -146,16 +172,16 @@ class T2SConverter:
             sys.exit(-1)
         return data
 
-    def convert_and_save(self, text):
+    def convert_and_save(self, text, save_path):
         speech = self.convert(text)
-        self.save(speech)
+        self.save(speech, save_path)
 
-    def convert_and_get(self, text):
+    def convert_and_get(self, text, save_path):
         speech = self.convert(text)
-        return self.save(speech)
+        return self.save(speech, save_path)
 
 
-class Generator:
+class ContextGenerator:
     def __init__(self, key):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.key = key
@@ -191,11 +217,14 @@ class Generator:
             msg = "raw is none or empty"
             self.logger.error(msg)
             raise ValueError(msg)
-        if self.key in self.prompts:
-            query = {"role": "user", "content": "{0}".format(raw)}
-            messages = copy.deepcopy(self.prompts[self.key])
-            messages.append(query)
-            return messages
-        else:
-            self.logger.debug("Invalid key.")
-            raise ValueError("Invalid key. Use 'polish' or 'free'.")
+        query = {"role": "user", "content": "{0}".format(raw)}
+        self.prompts[self.key].append(query)
+        return self.prompts[self.key]
+
+    def update_response(self, raw):
+        if raw is None or raw == '':
+            msg = "text is none or empty"
+            self.logger.error(msg)
+            raise ValueError(msg)
+        response = {"role": "assistant", "content": "{0}".format(raw)}
+        self.prompts[self.key].append(response)

@@ -3,9 +3,9 @@ import os.path
 import threading
 import time
 import wave
-from src.service import S2TConverter, ChatService, T2SConverter, Generator, play
+from src.service import S2TConverter, ChatService, T2SConverter, ContextGenerator, play
 import pyaudio
-import traceback
+import openai
 from pynput import keyboard
 import sys
 
@@ -134,35 +134,38 @@ class Consumer(threading.Thread):
         self.config = config
         self.queue = queue
         self.running = True
+        self.worker = Worker(self.config)
 
     def run(self):
         while self.running:
             file_meta = self.queue.get()
-            t = Worker(self.config, file_meta)
-            t.start()
+            self.worker.run(file_meta)
             self.queue.task_done()
 
 
-class Worker(threading.Thread):
-    def __init__(self, config, file_meta):
+class Worker:
+    def __init__(self, config):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.file_meta = file_meta
-        self.save_path = os.path.join(config['save_dir'], file_meta['name'].split('.')[0] + '-reply' + '.wav')
+        self.save_dir = config['save_dir']
+        if openai.api_key is None:
+            openai.api_key = config['api_key']['openai']
         self.s2t = S2TConverter()
+        self.generator = ContextGenerator(config['gpt']['mode'])
         self.chatbot = ChatService(model=config['gpt']['model'])
-        self.generator = Generator(config['gpt']['mode'])
-        self.t2s = T2SConverter(config, self.save_path)
+        self.t2s = T2SConverter(config)
 
-    def run(self):
+    def run(self, file_meta):
         try:
-            text = self.s2t.convert(self.file_meta['path'])
+            text = self.s2t.convert(file_meta['path'])
             self.logger.info("User: {0}".format(text))
             text = self.generator.generate(text)
             text = self.chatbot.chat(text)
+            self.generator.update_response(text)
             self.logger.info("TalkGPT: {0}".format(text))
-            self.t2s.convert_and_save(text)
-            play(self.save_path)
+            save_path = os.path.join(self.save_dir, file_meta['name'].split('.')[0] + '-reply' + '.wav')
+            self.t2s.convert_and_save(text, save_path)
+            play(save_path)
         except ValueError as e:
             self.logger.error("Error in speech-to-text: {0}".format(e))
             sys.exit(-1)
