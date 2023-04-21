@@ -13,4 +13,5 @@ polly:
   engine: neural/standard
 
 gpt:
-  mode: polish
+  model: gpt-3.5-turbo/gpt-4/...
+  mode: polish/free
