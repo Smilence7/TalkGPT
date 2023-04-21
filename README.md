@@ -59,3 +59,7 @@ No input/output restriction.
 #### 2. Polish mode
 Speak several sentences and the program will respond with a better or more native version. Primarily intended for language improvement purposes.
 
+## Todo
+#### 1. Packaging
+#### 2. Implement user interface for key binding & configuration
+
