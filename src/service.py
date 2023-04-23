@@ -185,24 +185,12 @@ class ContextGenerator:
     def __init__(self, key):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.key = key
-        # self.prompts = {
-        #     "polish": [
-        #         {"role": "system", "content": "You are a helpful assistant with ability of language improving like "
-        #                                       "showing more native expression of speech. You should provide the "
-        #                                       "polished version of the given speech directly, while trying to "
-        #                                       "maintain the original meaning as much as possible."},
-        #         {"role": "user", "content": "I like table games, i also like foreign cultures."},
-        #         {"role": "assistant", "content": "I enjoy playing tabletop games and have a fascination with foreign "
-        #                                          "cultures."}
-        #     ],
-        #     "free": [
-        #         {"role": "system", "content": "You are a helpful assistant engaged in a free talking conversation. "
-        #                                       "Feel free to respond naturally to any input in the content region."}
-        #     ]
-        # }
         self.prompts = {
             "polish": [
-                {"role": "system", "content": "You are assistant, show more native expression of user's speech."},
+                {"role": "system", "content": "You are a helpful assistant with ability of language improving like "
+                                              "showing more native expression of speech. You should provide the "
+                                              "polished version of the given speech directly, while trying to "
+                                              "maintain the original meaning as much as possible."},
                 {"role": "user", "content": "I like table games, i also like foreign cultures."},
                 {"role": "assistant", "content": "I enjoy playing tabletop games and have a fascination with foreign "
                                                  "cultures."}

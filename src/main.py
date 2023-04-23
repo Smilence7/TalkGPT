@@ -5,7 +5,7 @@ import yaml
 import sys
 from PySide2.QtWidgets import QApplication
 from component import Producer, Consumer
-from src.ui import TalkGPTGui
+from ui import TalkGPTGui
 
 
 class TalkGPTApp:
@@ -30,7 +30,7 @@ class TalkGPTApp:
 if __name__ == '__main__':
     app = TalkGPTApp()
     app.activate()
-    qt_app = QApplication(sys.argv)
-    s2s_gui = TalkGPTGui(app)
-    s2s_gui.show()
-    sys.exit(qt_app.exec_())
+    # qt_app = QApplication(sys.argv)
+    # s2s_gui = TalkGPTGui(app)
+    # s2s_gui.show()
+    # sys.exit(qt_app.exec_())
