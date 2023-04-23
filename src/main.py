@@ -2,11 +2,13 @@ import logging.config
 from os import path
 import queue
 import yaml
-
+import sys
+from PySide2.QtWidgets import QApplication
 from component import Producer, Consumer
+from src.ui import TalkGPTGui
 
 
-class S2SApp:
+class TalkGPTApp:
     def __init__(self):
         parent_dir = path.dirname(path.dirname(path.abspath(__file__)))
         log_conf = path.join(parent_dir, 'config/logging.conf')
@@ -14,9 +16,9 @@ class S2SApp:
         conf = path.join(parent_dir, 'config/client.yml')
         with open(conf, 'r') as f:
             self.config = yaml.safe_load(f)
-        q = queue.Queue()
-        self.producer = Producer(self.config, q)
-        self.consumer = Consumer(self.config, q)
+        self.q = queue.Queue()
+        self.producer = Producer(self.config, self.q)
+        self.consumer = Consumer(self.config, self.q)
 
     def activate(self):
         self.producer.start()
@@ -26,5 +28,9 @@ class S2SApp:
 
 
 if __name__ == '__main__':
-    app = S2SApp()
+    app = TalkGPTApp()
     app.activate()
+    qt_app = QApplication(sys.argv)
+    s2s_gui = TalkGPTGui(app)
+    s2s_gui.show()
+    sys.exit(qt_app.exec_())

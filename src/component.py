@@ -92,6 +92,8 @@ class Producer(threading.Thread):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.dir_path = config['save_dir']
+        self.config = config
+        self._hot_key = config['hot_key']
         self.queue = queue
         self.p = pyaudio.PyAudio()
         self.recorder = None
@@ -100,8 +102,16 @@ class Producer(threading.Thread):
         self.recorder_threads = []
         self.idx = -1
 
+    @property
+    def hot_key(self):
+        return self._hot_key
+
+    @hot_key.setter
+    def hot_key(self, value):
+        self._hot_key = value
+
     def on_press(self, key):
-        if key == keyboard.KeyCode.from_char('t') and not self.pressing:
+        if key == keyboard.KeyCode.from_char(self.hot_key) and not self.pressing:
             self.pressing = True
             timestamp = time.strftime('%Y%m%d-%H%M%S')
             self.filename = f'rec-{timestamp}.wav'
@@ -112,7 +122,7 @@ class Producer(threading.Thread):
             self.logger.debug(self.recorder_threads[self.idx].getName() + " started")
 
     def on_release(self, key):
-        if key == keyboard.KeyCode.from_char('t') and self.pressing:
+        if key == keyboard.KeyCode.from_char(self.hot_key) and self.pressing:
             self.pressing = False
             self.recorder.stop_gracefully()
             self.recorder_threads[self.idx].join()
