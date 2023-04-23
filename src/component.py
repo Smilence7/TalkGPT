@@ -3,7 +3,7 @@ import os.path
 import threading
 import time
 import wave
-from src.service import S2TConverter, ChatService, T2SConverter, ContextGenerator, play
+from service import S2TConverter, ChatService, T2SConverter, ContextGenerator, play
 import pyaudio
 import openai
 from pynput import keyboard
@@ -163,9 +163,9 @@ class Worker:
             text = self.chatbot.chat(text)
             self.generator.update_response(text)
             self.logger.info("TalkGPT: {0}".format(text))
-            save_path = os.path.join(self.save_dir, file_meta['name'].split('.')[0] + '-reply' + '.wav')
+            save_path = os.path.join(os.path.normpath(self.save_dir), file_meta['name'].split('.')[0] + '-reply.mp3')
             self.t2s.convert_and_save(text, save_path)
             play(save_path)
         except ValueError as e:
-            self.logger.error("Error in speech-to-text: {0}".format(e))
+            self.logger.error("Error in workflow: {0}".format(e))
             sys.exit(-1)
