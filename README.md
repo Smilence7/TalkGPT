@@ -59,7 +59,11 @@ No input/output restriction.
 #### 2. Polish mode
 Speak several sentences and the program will respond with a better or more native version. Primarily intended for language improvement purposes.
 
-## Todo
-#### 1. Packaging
-#### 2. Implement user interface for key binding & configuration
+## RoadMap
+- [x] speech-to-speech workflow
+- [ ] Implement GUI for hotkeys binding & configuration
+- [ ] Packaging
+- [ ] Locally fine-tuned TTS model
+- [ ] Show chat history in GUI
+- [ ] Function: Replay the last response.
 
